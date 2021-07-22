@@ -1,35 +1,24 @@
 const fs = require("fs");
-const util = require("util");
-const writeFileAsync = util.promisify(fs.writeFile);
-const readFileAsync = util.promisify(fs.readFile);
 const path = require("path");
 
 function writeNotes(notes) {
-  writeFileAsync(path.join(__dirname, "../db/db.json"), notes, (err) => {
+  return fs.writeFile(path.join(__dirname, "../db/db.json"), JSON.stringify(notes), (err) => {
     if (err) throw err;
     console.log("The note has been saved!");
   });
 }
-
 function readNotes() {
-  readFileAsync(path.join(__dirname, "../db/db.json"), (err, notes) => {
-    if (err) throw err;
-    console.log(notes);
-    return notes;
-  });
+  return fs.readFileSync(path.join(__dirname, "../db/db.json"), "utf8");
 }
-
 module.exports = (app) => {
   app.get("/api/notes", async (req, res) => {
-    const notes = await readNotes();
+    const notes = await JSON.parse(readNotes());
     res.json(notes);
   });
-
-  app.post("/api/notes", (req, res) => {
-    readNotes().then((notes) => {
-      notes.push(req.body);
-      writeNotes(notes);
-      res.json(req.body);
-    });
+  app.post("/api/notes", async (req, res) => {
+    const notes = await JSON.parse(readNotes());
+    notes.push(req.body);
+    writeNotes(notes);
+    res.json(req.body);
   });
 };
